@@ -1,23 +1,19 @@
-export type UserRole = 'user' | 'admin' | 'moderator';
+export type UserRole = 'user' | 'admin' | 'moderator' | 'super-admin';
 
-
+export interface CreatedByInfo {
+    userId: string;
+    username: string;
+}
 
 export interface User {
-
     _id: string;
-
     username: string;
-
     avatar?: string;
-
     role: UserRole;
-
     isActive: boolean;
-
+    createdBy?: CreatedByInfo | null;
     createdAt: string;
-
     updatedAt: string;
-
 }
 
 

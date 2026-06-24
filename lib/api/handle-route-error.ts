@@ -13,6 +13,11 @@ const KNOWN_ERRORS: Record<string, ApiErrorBody> = {
     FORBIDDEN: { code: 'FORBIDDEN', message: 'Forbidden', statusCode: 403 },
     USERNAME_EXISTS: { code: 'USERNAME_EXISTS', message: 'Tên người dùng đã tồn tại', statusCode: 409 },
     INVALID_ROLE: { code: 'INVALID_ROLE', message: 'Vai trò không hợp lệ', statusCode: 400 },
+    FORBIDDEN_ROLE: {
+        code: 'FORBIDDEN_ROLE',
+        message: 'Bạn không có quyền gán vai trò này',
+        statusCode: 403,
+    },
     INVALID_CREDENTIALS: {
         code: 'INVALID_CREDENTIALS',
         message: 'Tên đăng nhập hoặc mật khẩu không đúng',

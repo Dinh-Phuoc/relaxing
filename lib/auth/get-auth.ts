@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { verifyAccessToken, JwtPayload } from '~/lib/auth/jwt';
+import { isAccountManager } from '~/lib/auth/roles';
 
 export function getAuthFromRequest(request: NextRequest): JwtPayload | null {
     try {
@@ -20,6 +21,6 @@ export function requireAuth(request: NextRequest): JwtPayload {
 
 export function requireAdmin(request: NextRequest): JwtPayload {
     const auth = requireAuth(request);
-    if (auth.role !== 'admin') throw new Error('FORBIDDEN');
+    if (!isAccountManager(auth.role)) throw new Error('FORBIDDEN');
     return auth;
 }

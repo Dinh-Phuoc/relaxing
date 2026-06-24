@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '~/lib/auth/get-auth';
 import { handleRouteError } from '~/lib/api/handle-route-error';
 import { authService } from '~/services/auth/auth.service';
+import { UserRole } from '~/types/auth';
+
+function toActor(auth: { userId: string; username: string; role: string }) {
+    return {
+        userId: auth.userId,
+        username: auth.username,
+        role: auth.role as UserRole,
+    };
+}
 
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> },
 ) {
     try {
-        requireAdmin(request);
+        const auth = requireAdmin(request);
 
         const { id } = await params;
         const body = await request.json();
@@ -28,7 +37,7 @@ export async function PATCH(
             );
         }
 
-        const user = await authService.updateUserStatus(id, isActive);
+        const user = await authService.updateUserStatus(id, isActive, toActor(auth));
         return NextResponse.json({
             success: true,
             data: user,

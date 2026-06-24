@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 
 import { connectDB } from '~/lib/db/mongoose';
 
@@ -13,6 +14,13 @@ import UserModel, { IUser } from '~/models/user.model';
 import RefreshTokenModel from '~/models/refresh-token.model';
 
 import { UserRole } from '~/types/auth';
+import { getAssignableRoles } from '~/lib/auth/roles';
+
+export interface ActorContext {
+    userId: string;
+    username: string;
+    role: UserRole;
+}
 
 
 
@@ -35,15 +43,11 @@ export interface LoginInput {
 
 
 export interface CreateUserInput {
-
     username: string;
-
     password: string;
-
     role?: UserRole;
-
     isActive?: boolean;
-
+    createdBy: ActorContext;
 }
 
 
@@ -61,25 +65,37 @@ function assertUserActive(user: IUser): void {
 
 
 function serializeUser(user: IUser) {
-
     return {
-
         _id: user._id.toString(),
-
         username: user.username,
-
         avatar: user.avatar,
-
         role: user.role,
-
         isActive: user.isActive !== false,
-
+        createdBy: user.createdBy
+            ? {
+                  userId: user.createdBy.userId.toString(),
+                  username: user.createdBy.username,
+              }
+            : null,
         createdAt: user.createdAt,
-
         updatedAt: user.updatedAt,
-
     };
+}
 
+function assertCanManageUser(actor: ActorContext, target: IUser): void {
+    if (actor.role === 'super-admin') return;
+    if (actor.role !== 'admin') throw new Error('FORBIDDEN');
+    if (target.createdBy?.userId.toString() !== actor.userId) throw new Error('FORBIDDEN');
+}
+
+function resolveRoleForCreate(actor: ActorContext, requestedRole?: UserRole): UserRole {
+    const assignable = getAssignableRoles(actor.role);
+    if (assignable.length === 0) throw new Error('FORBIDDEN');
+
+    const role = requestedRole ?? 'user';
+    if (!assignable.includes(role)) throw new Error('FORBIDDEN_ROLE');
+
+    return role;
 }
 
 
@@ -103,149 +119,92 @@ function buildTokenPayload(user: IUser) {
 export const authService = {
 
     async createUser(input: CreateUserInput) {
-
         await connectDB();
 
-
-
         const username = input.username.trim();
-
         const existingUsername = await UserModel.findOne({ username });
-
         if (existingUsername) throw new Error('USERNAME_EXISTS');
 
-
-
-        const role = input.role ?? 'user';
-
-        const validRoles: UserRole[] = ['user', 'admin', 'moderator'];
-
-        if (!validRoles.includes(role)) throw new Error('INVALID_ROLE');
-
-
-
+        const role = resolveRoleForCreate(input.createdBy, input.role);
         const passwordHash = await hashPassword(input.password);
 
         const user = await UserModel.create({
-
             username,
-
             passwordHash,
-
             role,
-
             isActive: input.isActive ?? true,
-
+            createdBy: {
+                userId: new mongoose.Types.ObjectId(input.createdBy.userId),
+                username: input.createdBy.username,
+            },
         });
-
-
 
         logger.activity(`Tạo tài khoản ${username}.`, {
-
             type: 'admin-users',
-
-            data: { username, role, isActive: user.isActive },
-
+            data: {
+                username,
+                role,
+                isActive: user.isActive,
+                createdBy: input.createdBy.username,
+            },
         });
-
-
 
         return serializeUser(user);
-
     },
 
-
-
-    async updateUserStatus(userId: string, isActive: boolean) {
-
+    async updateUserStatus(userId: string, isActive: boolean, actor: ActorContext) {
         await connectDB();
 
-
+        if (userId === actor.userId && !isActive) throw new Error('FORBIDDEN');
 
         const current = await UserModel.findById(userId);
-
         if (!current) throw new Error('USER_NOT_FOUND');
 
+        assertCanManageUser(actor, current);
 
-
-        const updated = await UserModel.findByIdAndUpdate(
-
-            userId,
-
-            { isActive },
-
-            { new: true },
-
-        );
-
-
-
+        const updated = await UserModel.findByIdAndUpdate(userId, { isActive }, { new: true });
         if (!updated) throw new Error('USER_NOT_FOUND');
 
-
-
         if (!isActive) {
-
             await RefreshTokenModel.deleteMany({ userId: updated._id });
-
         }
 
-
-
         logger.activity(`${isActive ? 'Kích hoạt' : 'Vô hiệu hóa'} tài khoản ${updated.username}.`, {
-
             type: 'admin-users',
-
-            data: { userId, isActive },
-
+            data: { userId, isActive, actor: actor.username },
             oldData: { isActive: current.isActive },
-
         });
 
-
-
         return serializeUser(updated);
-
     },
 
-
-
-    async listUsers(page = 1, limit = 50) {
-
+    async listUsers(page = 1, limit = 50, actor?: ActorContext) {
         await connectDB();
 
-
+        const filter =
+            actor && actor.role !== 'super-admin'
+                ? { 'createdBy.userId': new mongoose.Types.ObjectId(actor.userId) }
+                : {};
 
         const skip = (page - 1) * limit;
-
         const [users, total] = await Promise.all([
-
-            UserModel.find().select('-passwordHash').sort({ createdAt: -1 }).skip(skip).limit(limit),
-
-            UserModel.countDocuments(),
-
+            UserModel.find(filter)
+                .select('-passwordHash')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+            UserModel.countDocuments(filter),
         ]);
 
-
-
         return {
-
             items: users.map(serializeUser),
-
             pagination: {
-
                 total,
-
                 page,
-
                 limit,
-
                 totalPages: Math.ceil(total / limit) || 0,
-
             },
-
         };
-
     },
 
 

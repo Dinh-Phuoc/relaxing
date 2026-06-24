@@ -170,12 +170,12 @@ export default function Header() {
         }
     };
 
-    const isAdmin = user?.role === "admin";
+    const isAccountManager = user?.role === "admin" || user?.role === "super-admin";
 
     const userMenuItems = [
         { icon: Heart, label: "Yêu thích", href: "/favorites" },
         { icon: Clock, label: "Lịch sử xem", href: "/history" },
-        ...(isAdmin
+        ...(isAccountManager
             ? [{ icon: Shield, label: "Quản lý tài khoản", href: "/admin/users" }]
             : []),
     ];

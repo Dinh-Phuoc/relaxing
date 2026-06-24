@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Shield, UserPlus, Users } from 'lucide-react';
 import { useAuthStore } from '~/stores/auth.store';
 import apiClient from '~/lib/axios/client';
 import { User, UserRole } from '~/types/auth';
+import { getAssignableRoles, isAccountManager, isSuperAdmin } from '~/lib/auth/roles';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -38,28 +39,36 @@ import {
     LoadingText,
 } from '~/styles/components/admin.styles';
 
-const ROLES: { label: string; value: UserRole }[] = [
-    { label: 'Người dùng', value: 'user' },
-    { label: 'Moderator', value: 'moderator' },
-    { label: 'Admin', value: 'admin' },
-];
-
 const ROLE_LABELS: Record<UserRole, string> = {
     user: 'Người dùng',
     moderator: 'Moderator',
     admin: 'Admin',
+    'super-admin': 'Super Admin',
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
     user: '#a0a0b0',
     moderator: '#f5c518',
     admin: '#e50914',
+    'super-admin': '#8b5cf6',
+};
+
+const ROLE_OPTION_LABELS: Record<UserRole, string> = {
+    user: 'Người dùng',
+    moderator: 'Moderator',
+    admin: 'Admin',
+    'super-admin': 'Super Admin',
 };
 
 export default function AdminUsersClient() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const { user, isAuthenticated } = useAuthStore();
+
+    const assignableRoles = useMemo(
+        () => (user?.role ? getAssignableRoles(user.role) : []),
+        [user?.role],
+    );
 
     const [form, setForm] = useState({
         username: '',
@@ -72,16 +81,18 @@ export default function AdminUsersClient() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+    const canManage = isAuthenticated && isAccountManager(user?.role);
+
     const { data: usersData, isLoading: usersLoading } = useQuery({
         queryKey: ['admin-users'],
         queryFn: async () => {
             const { data } = await apiClient.get('/admin/users');
             return data.data as { items: User[]; pagination: { total: number } };
         },
-        enabled: isAuthenticated && user?.role === 'admin',
+        enabled: canManage,
     });
 
-    if (!isAuthenticated || user?.role !== 'admin') {
+    if (!canManage) {
         if (typeof window !== 'undefined') router.replace('/');
         return null;
     }
@@ -105,12 +116,22 @@ export default function AdminUsersClient() {
             return;
         }
 
+        const payload = {
+            ...form,
+            role: assignableRoles.length === 1 ? assignableRoles[0] : form.role,
+        };
+
         setLoading(true);
         try {
-            const { data } = await apiClient.post('/admin/users', form);
+            const { data } = await apiClient.post('/admin/users', payload);
             if (data.success) {
-                setSuccess(`Đã tạo tài khoản ${form.username} (${ROLE_LABELS[form.role]})`);
-                setForm({ username: '', password: '', role: 'user', isActive: true });
+                setSuccess(`Đã tạo tài khoản ${form.username} (${ROLE_LABELS[payload.role]})`);
+                setForm({
+                    username: '',
+                    password: '',
+                    role: assignableRoles[0] ?? 'user',
+                    isActive: true,
+                });
                 queryClient.invalidateQueries({ queryKey: ['admin-users'] });
             }
         } catch (err: unknown) {
@@ -140,6 +161,10 @@ export default function AdminUsersClient() {
         }
     };
 
+    const subtitle = isSuperAdmin(user?.role)
+        ? 'Super Admin — xem toàn bộ tài khoản, tạo Admin và Người dùng'
+        : 'Admin — chỉ xem và quản lý tài khoản do bạn tạo';
+
     return (
         <AdminContainer>
             <AdminHeader>
@@ -148,7 +173,7 @@ export default function AdminUsersClient() {
                 </AdminIconBox>
                 <div>
                     <AdminTitle>Quản lý tài khoản</AdminTitle>
-                    <AdminSubtitle>Chỉ admin mới có quyền tạo tài khoản mới</AdminSubtitle>
+                    <AdminSubtitle>{subtitle}</AdminSubtitle>
                 </div>
             </AdminHeader>
 
@@ -188,22 +213,29 @@ export default function AdminUsersClient() {
                     </AdminFormGrid>
 
                     <AdminFormGrid>
-                        <AdminField>
-                            <Label htmlFor="role">Vai trò</Label>
-                            <AdminSelect
-                                id="role"
-                                name="role"
-                                value={form.role}
-                                onChange={handleChange}
-                                className="dark-select"
-                            >
-                                {ROLES.map((r) => (
-                                    <option key={r.value} value={r.value}>
-                                        {r.label}
-                                    </option>
-                                ))}
-                            </AdminSelect>
-                        </AdminField>
+                        {assignableRoles.length > 1 ? (
+                            <AdminField>
+                                <Label htmlFor="role">Vai trò</Label>
+                                <AdminSelect
+                                    id="role"
+                                    name="role"
+                                    value={form.role}
+                                    onChange={handleChange}
+                                    className="dark-select"
+                                >
+                                    {assignableRoles.map((role) => (
+                                        <option key={role} value={role}>
+                                            {ROLE_OPTION_LABELS[role]}
+                                        </option>
+                                    ))}
+                                </AdminSelect>
+                            </AdminField>
+                        ) : (
+                            <AdminField>
+                                <Label>Vai trò</Label>
+                                <Input value={ROLE_OPTION_LABELS.user} disabled readOnly />
+                            </AdminField>
+                        )}
                         <AdminCheckboxRow>
                             <AdminCheckboxLabel>
                                 <AdminCheckbox
@@ -250,6 +282,8 @@ export default function AdminUsersClient() {
                                     <UserMeta>
                                         {ROLE_LABELS[u.role]} ·{' '}
                                         {u.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
+                                        {' · '}
+                                        Tạo bởi: {u.createdBy?.username ?? '—'}
                                     </UserMeta>
                                 </div>
                                 <UserBadgeRow>

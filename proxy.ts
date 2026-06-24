@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, verifyRefreshToken } from '~/lib/auth/jwt';
 import { REFRESH_TOKEN_COOKIE } from '~/lib/auth/cookies';
+import { isAccountManager } from '~/lib/auth/roles';
 
 /** Trang công khai — không cần đăng nhập */
 const PUBLIC_ROUTES = ['/login'];
@@ -100,8 +101,8 @@ export function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 
-    // Chỉ admin mới vào /admin
-    if (ADMIN_ROUTES.some((route) => pathname.startsWith(route)) && userRole !== 'admin') {
+    // Chỉ admin / super-admin mới vào /admin
+    if (ADMIN_ROUTES.some((route) => pathname.startsWith(route)) && !isAccountManager(userRole)) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 

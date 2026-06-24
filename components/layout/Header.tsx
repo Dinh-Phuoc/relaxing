@@ -19,6 +19,7 @@ import { useFavorites } from "~/hooks/useFavorites";
 import apiClient from "~/lib/axios/client";
 import { markLoggedOut } from "~/lib/auth/session-flags";
 import { dispatchAuthChanged } from "~/lib/storage/user-local-storage";
+import { AuthLoadingOverlay } from "~/components/shared/AuthLoadingOverlay";
 import {
     HeaderRoot,
     HeaderInner,
@@ -100,6 +101,7 @@ export default function Header() {
     const [scrolled, setScrolled] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isTablet, setIsTablet] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
@@ -150,6 +152,12 @@ export default function Header() {
     };
 
     const handleLogout = async () => {
+        if (isLoggingOut) return;
+
+        setIsLoggingOut(true);
+        setShowUserMenu(false);
+        closeMobileNav();
+
         try {
             await apiClient.post("/auth/logout");
         } catch {
@@ -158,7 +166,6 @@ export default function Header() {
             markLoggedOut();
             clearAuth();
             dispatchAuthChanged();
-            setShowUserMenu(false);
             window.location.assign("/login");
         }
     };
@@ -178,7 +185,9 @@ export default function Header() {
     const showHamburger = isMobile;
 
     return (
-        <HeaderRoot $scrolled={scrolled}>
+        <>
+            {isLoggingOut && <AuthLoadingOverlay message="Đang đăng xuất..." />}
+            <HeaderRoot $scrolled={scrolled}>
             <HeaderInner>
                 <HeaderBar>
                     {/* Logo — luôn hiển thị, không co */}
@@ -286,7 +295,10 @@ export default function Header() {
                                                 </UserDropdownLink>
                                             ))}
                                             <UserDropdownDivider />
-                                            <UserDropdownLogout onClick={handleLogout}>
+                                            <UserDropdownLogout
+                                                onClick={handleLogout}
+                                                disabled={isLoggingOut}
+                                            >
                                                 <LogOut size={16} /> Đăng xuất
                                             </UserDropdownLogout>
                                         </UserDropdown>
@@ -364,10 +376,8 @@ export default function Header() {
                                     </MobileUserLink>
                                 ))}
                                 <MobileLogoutButton
-                                    onClick={() => {
-                                        handleLogout();
-                                        closeMobileNav();
-                                    }}
+                                    onClick={handleLogout}
+                                    disabled={isLoggingOut}
                                 >
                                     <LogOut size={16} /> Đăng xuất
                                 </MobileLogoutButton>
@@ -386,5 +396,6 @@ export default function Header() {
                 )}
             </HeaderInner>
         </HeaderRoot>
+        </>
     );
 }

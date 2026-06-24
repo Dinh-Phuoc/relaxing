@@ -235,8 +235,13 @@ export const UserDropdownLogout = styled.button`
     width: 100%;
     transition: all 0.2s;
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: rgba(229, 9, 20, 0.1);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 `;
 
@@ -323,6 +328,11 @@ export const MobileLogoutButton = styled.button`
     font-weight: 500;
     width: 100%;
     text-align: left;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
 `;
 
 export const MobileAuthRow = styled.div`

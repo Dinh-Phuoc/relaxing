@@ -28,6 +28,39 @@ export const LoadingSpinner = styled.div<{ $size?: number }>`
     animation: ${spin} 0.8s linear infinite;
 `;
 
+export const AuthLoadingOverlayRoot = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(3px);
+    cursor: wait;
+    touch-action: none;
+`;
+
+export const AuthLoadingOverlayCard = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 28px 36px;
+    border-radius: ${({ theme }) => theme.radii.lg};
+    background: rgba(13, 13, 20, 0.95);
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+`;
+
+export const AuthLoadingOverlayMessage = styled.p`
+    color: ${({ theme }) => theme.colors.textPrimary};
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+`;
+
 export const NotFoundText = styled.p`
     color: ${({ theme }) => theme.colors.textSecondary};
     font-size: 18px;

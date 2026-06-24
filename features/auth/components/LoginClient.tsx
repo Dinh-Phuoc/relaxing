@@ -9,6 +9,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert } from "~/components/ui/alert";
+import { AuthLoadingOverlay } from "~/components/shared/AuthLoadingOverlay";
 import {
   AuthWrapper,
   AuthBrand,
@@ -63,7 +64,9 @@ export default function LoginClient() {
   };
 
   return (
-    <AuthWrapper>
+    <>
+      {loading && <AuthLoadingOverlay message="Đang đăng nhập..." />}
+      <AuthWrapper>
       <AuthBrand>
         <AuthLogo>
           <Film size={28} color="white" />
@@ -120,5 +123,6 @@ export default function LoginClient() {
         <AuthFooter>Liên hệ admin để được cấp tài khoản.</AuthFooter>
       </AuthCard>
     </AuthWrapper>
+    </>
   );
 }

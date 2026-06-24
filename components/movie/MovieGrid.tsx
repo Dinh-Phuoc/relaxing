@@ -9,13 +9,18 @@ interface MovieGridProps {
     movies: NormalizedMovie[];
     isLoading?: boolean;
     skeletonCount?: number;
+    columns?: number;
 }
 
 export default function MovieGrid({ movies, isLoading, skeletonCount = 12 }: MovieGridProps) {
     if (isLoading) return <MovieGridSkeleton count={skeletonCount} />;
 
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+        <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+            gap: '12px',
+        }}>
             {movies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
             ))}

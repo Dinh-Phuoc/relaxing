@@ -5,7 +5,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return (
         <>
             <Header />
-            <main style={{ paddingTop: '64px', minHeight: '100vh' }}>
+            <main style={{ paddingTop: '64px', minHeight: '100vh', overflowX: 'hidden', width: '100%' }}>
                 {children}
             </main>
             <Footer />

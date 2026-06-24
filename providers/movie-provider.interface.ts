@@ -11,7 +11,7 @@ export interface MovieProviderInterface {
     readonly name: MovieSource;
     readonly priority: number;
 
-    search(params: SearchParams): Promise<NormalizedMovie[]>;
+    search(params: SearchParams): Promise<PaginatedMovies>;
     getMovie(slug: string): Promise<NormalizedMovieDetail | null>;
     getEpisodes(slug: string): Promise<EpisodeGroup[]>;
     getLatest(page: number, limit: number): Promise<PaginatedMovies>;

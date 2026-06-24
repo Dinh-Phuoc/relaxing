@@ -17,3 +17,9 @@ export function requireAuth(request: NextRequest): JwtPayload {
     if (!auth) throw new Error('UNAUTHORIZED');
     return auth;
 }
+
+export function requireAdmin(request: NextRequest): JwtPayload {
+    const auth = requireAuth(request);
+    if (auth.role !== 'admin') throw new Error('FORBIDDEN');
+    return auth;
+}

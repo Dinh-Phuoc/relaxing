@@ -7,7 +7,7 @@ const REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES_IN ?? '30d';
 
 export interface JwtPayload {
     userId: string;
-    email: string;
+    username: string;
     role: string;
     iat?: number;
     exp?: number;

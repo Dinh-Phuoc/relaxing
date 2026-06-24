@@ -4,6 +4,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
+const AUTH_NO_RETRY_PATHS = ['/auth/refresh', '/auth/logout', '/auth/login', '/auth/register'];
+
 const apiClient = axios.create({
     baseURL: `${BASE_URL}/api`,
     headers: { 'Content-Type': 'application/json' },
@@ -26,6 +28,11 @@ function processQueue(error: unknown, token: string | null = null): void {
     failedQueue = [];
 }
 
+function isAuthNoRetryRequest(url?: string): boolean {
+    if (!url) return false;
+    return AUTH_NO_RETRY_PATHS.some((path) => url.includes(path));
+}
+
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
@@ -37,6 +44,12 @@ apiClient.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        const requestUrl = originalRequest?.url ?? '';
+
+        // Không retry refresh cho các auth endpoint — tránh vòng lặp vô hạn
+        if (isAuthNoRetryRequest(requestUrl)) {
+            return Promise.reject(error);
+        }
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
@@ -65,9 +78,6 @@ apiClient.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 setAccessToken(null);
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
-                }
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

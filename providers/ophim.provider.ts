@@ -204,16 +204,27 @@ export class OPhimProvider implements MovieProviderInterface {
         }
     }
 
-    async search(params: SearchParams): Promise<NormalizedMovie[]> {
+    async search(params: SearchParams): Promise<PaginatedMovies> {
+        const page = params.page ?? 1;
+        const limit = params.limit ?? 24;
+
         try {
             const data = await this.get<OPhimListResponse>('/tim-kiem', {
                 keyword: params.q,
-                page: params.page ?? 1,
-                limit: params.limit ?? 24,
+                page,
+                limit,
             });
-            return (data.items ?? []).map(normalizeMovie);
+            return {
+                items: (data.items ?? []).map(normalizeMovie),
+                pagination: {
+                    total: data.pagination?.totalItems ?? 0,
+                    page: data.pagination?.currentPage ?? page,
+                    limit,
+                    totalPages: Math.ceil((data.pagination?.totalItems ?? 0) / limit),
+                },
+            };
         } catch {
-            return [];
+            return { items: [], pagination: { total: 0, page, limit, totalPages: 0 } };
         }
     }
 

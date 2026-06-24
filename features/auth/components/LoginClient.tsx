@@ -2,15 +2,22 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Film, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '~/stores/auth.store';
 import apiClient from '~/lib/axios/client';
 
+function getSafeRedirect(path: string | null): string {
+    if (!path || !path.startsWith('/') || path.startsWith('//')) return '/';
+    if (path.startsWith('/login') || path.startsWith('/register')) return '/';
+    return path;
+}
+
 export default function LoginClient() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { setAuth } = useAuthStore();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPw, setShowPw] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -21,10 +28,10 @@ export default function LoginClient() {
         setError('');
         setLoading(true);
         try {
-            const { data } = await apiClient.post('/auth/login', { email, password });
+            const { data } = await apiClient.post('/auth/login', { username, password });
             if (data.success) {
                 setAuth(data.data.user, data.data.accessToken);
-                router.push('/');
+                router.push(getSafeRedirect(searchParams.get('redirect')));
             }
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
@@ -53,8 +60,8 @@ export default function LoginClient() {
             <div style={{ background: '#111118', borderRadius: '16px', padding: '28px', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                        <label style={{ display: 'block', color: '#a0a0b0', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>EMAIL</label>
-                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" required style={inputStyle}
+                        <label style={{ display: 'block', color: '#a0a0b0', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>TÊN ĐĂNG NHẬP</label>
+                        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="username" required style={inputStyle}
                             onFocus={(e) => (e.target.style.borderColor = 'rgba(229,9,20,0.5)')}
                             onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
                         />

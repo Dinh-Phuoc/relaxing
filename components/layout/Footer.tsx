@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Film } from 'lucide-react';
@@ -6,7 +8,7 @@ export default function Footer() {
     return (
         <footer style={{ background: '#0d0d15', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: '80px', padding: '48px 0 24px' }}>
             <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', marginBottom: '40px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '28px', marginBottom: '40px' }}>
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                             <div style={{ width: 32, height: 32, borderRadius: '8px', background: 'linear-gradient(135deg, #e50914, #b20710)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

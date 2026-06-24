@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '~/services/auth/auth.service';
 import { getRefreshTokenCookieOptions, REFRESH_TOKEN_COOKIE } from '~/lib/auth/cookies';
+import { handleRouteError } from '~/lib/api/handle-route-error';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { email, password } = body;
+        const { username, password } = body;
 
-        if (!email || !password) {
+        if (!username || !password) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
                         code: 'VALIDATION_ERROR',
-                        message: 'Email and password are required',
+                        message: 'Username and password are required',
                         statusCode: 400,
                     },
                 },
@@ -21,7 +22,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await authService.login({ email, password });
+        if (password.length < 6) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: {
+                        code: 'VALIDATION_ERROR',
+                        message: 'Password must be at least 6 characters',
+                        statusCode: 400,
+                    },
+                },
+                { status: 400 },
+            );
+        }
+
+        const result = await authService.login({ username, password });
 
         const response = NextResponse.json({
             success: true,
@@ -31,26 +46,6 @@ export async function POST(request: NextRequest) {
         response.cookies.set(REFRESH_TOKEN_COOKIE, result.refreshToken, getRefreshTokenCookieOptions());
         return response;
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : '';
-        if (message === 'INVALID_CREDENTIALS') {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: {
-                        code: 'INVALID_CREDENTIALS',
-                        message: 'Invalid email or password',
-                        statusCode: 401,
-                    },
-                },
-                { status: 401 },
-            );
-        }
-        return NextResponse.json(
-            {
-                success: false,
-                error: { code: 'SERVER_ERROR', message: 'Internal server error', statusCode: 500 },
-            },
-            { status: 500 },
-        );
+        return handleRouteError('POST /api/auth/login', error);
     }
 }

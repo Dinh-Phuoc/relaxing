@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '~/services/auth/auth.service';
 import { getRefreshTokenCookieOptions, REFRESH_TOKEN_COOKIE } from '~/lib/auth/cookies';
+import { handleRouteError } from '~/lib/api/handle-route-error';
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { email, username, password } = body;
+        const { username, password } = body;
 
-        if (!email || !username || !password) {
+        if (!username || !password) {
             return NextResponse.json(
                 {
                     success: false,
                     error: {
                         code: 'VALIDATION_ERROR',
-                        message: 'Email, username and password are required',
+                        message: 'Username and password are required',
                         statusCode: 400,
                     },
                 },
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const result = await authService.register({ email, username, password });
+        const result = await authService.register({ username, password });
 
         const response = NextResponse.json({
             success: true,
@@ -45,31 +46,6 @@ export async function POST(request: NextRequest) {
         response.cookies.set(REFRESH_TOKEN_COOKIE, result.refreshToken, getRefreshTokenCookieOptions());
         return response;
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        if (message === 'EMAIL_EXISTS') {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: { code: 'EMAIL_EXISTS', message: 'Email already in use', statusCode: 409 },
-                },
-                { status: 409 },
-            );
-        }
-        if (message === 'USERNAME_EXISTS') {
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: { code: 'USERNAME_EXISTS', message: 'Username already taken', statusCode: 409 },
-                },
-                { status: 409 },
-            );
-        }
-        return NextResponse.json(
-            {
-                success: false,
-                error: { code: 'SERVER_ERROR', message: 'Internal server error', statusCode: 500 },
-            },
-            { status: 500 },
-        );
+        return handleRouteError('POST /api/auth/register', error);
     }
 }

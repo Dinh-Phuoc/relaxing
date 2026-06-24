@@ -8,7 +8,7 @@ export function getRefreshTokenCookieOptions(): Partial<ResponseCookie> {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
         sameSite: 'strict' as const,
-        path: '/api/auth',
+        path: '/',
         maxAge: THIRTY_DAYS_S,
     };
 }
@@ -18,7 +18,7 @@ export function clearRefreshTokenCookieOptions(): Partial<ResponseCookie> {
         httpOnly: true,
         secure: process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production',
         sameSite: 'strict' as const,
-        path: '/api/auth',
+        path: '/',
         maxAge: 0,
     };
 }

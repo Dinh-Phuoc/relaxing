@@ -10,7 +10,7 @@ import apiClient from '~/lib/axios/client';
 export default function RegisterClient() {
     const router = useRouter();
     const { setAuth } = useAuthStore();
-    const [form, setForm] = useState({ email: '', username: '', password: '', confirm: '' });
+    const [form, setForm] = useState({ username: '', password: '', confirm: '' });
     const [showPw, setShowPw] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export default function RegisterClient() {
         if (form.password.length < 6) { setError('Mật khẩu tối thiểu 6 ký tự'); return; }
         setLoading(true);
         try {
-            const { data } = await apiClient.post('/auth/register', { email: form.email, username: form.username, password: form.password });
+            const { data } = await apiClient.post('/auth/register', { username: form.username, password: form.password });
             if (data.success) {
                 setAuth(data.data.user, data.data.accessToken);
                 router.push('/');
@@ -57,7 +57,6 @@ export default function RegisterClient() {
             <div style={{ background: '#111118', borderRadius: '16px', padding: '28px', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {[
-                        { name: 'email', label: 'EMAIL', type: 'email', placeholder: 'email@example.com' },
                         { name: 'username', label: 'TÊN NGƯỜI DÙNG', type: 'text', placeholder: 'username' },
                     ].map(({ name, label, type, placeholder }) => (
                         <div key={name}>

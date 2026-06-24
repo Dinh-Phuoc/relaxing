@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '~/services/auth/auth.service';
-import { getRefreshTokenCookieOptions, REFRESH_TOKEN_COOKIE } from '~/lib/auth/cookies';
+import {
+    clearRefreshTokenCookieOptions,
+    getRefreshTokenCookieOptions,
+    REFRESH_TOKEN_COOKIE,
+} from '~/lib/auth/cookies';
+import { handleRouteError } from '~/lib/api/handle-route-error';
 
 export async function POST(request: NextRequest) {
     try {
@@ -29,17 +34,14 @@ export async function POST(request: NextRequest) {
             getRefreshTokenCookieOptions(),
         );
         return response;
-    } catch {
-        return NextResponse.json(
-            {
-                success: false,
-                error: {
-                    code: 'INVALID_REFRESH_TOKEN',
-                    message: 'Invalid refresh token',
-                    statusCode: 401,
-                },
-            },
-            { status: 401 },
-        );
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : '';
+        const response = handleRouteError('POST /api/auth/refresh', error);
+
+        if (message === 'ACCOUNT_DISABLED' || message === 'INVALID_REFRESH_TOKEN') {
+            response.cookies.set(REFRESH_TOKEN_COOKIE, '', clearRefreshTokenCookieOptions());
+        }
+
+        return response;
     }
 }

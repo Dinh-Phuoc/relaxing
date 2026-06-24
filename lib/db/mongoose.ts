@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { ensureUserIndexes } from '~/lib/db/ensure-user-indexes';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 
@@ -36,6 +37,7 @@ export async function connectDB(): Promise<typeof mongoose> {
 
     try {
         cached.conn = await cached.promise;
+        await ensureUserIndexes();
     } catch (e) {
         cached.promise = null;
         throw e;

@@ -4,9 +4,9 @@ import { useEffect, useRef } from 'react';
 import axios from 'axios';
 import apiClient, { setAccessToken } from '~/lib/axios/client';
 import { useAuthStore } from '~/stores/auth.store';
+import { COOKIE_PROBE_KEY, hasLoggedOutFlag } from '~/lib/auth/session-flags';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? '';
-const COOKIE_PROBE_KEY = 'cinehub-cookie-probed';
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
 
 /** Gọi auth endpoint trực tiếp — không qua interceptor tránh vòng lặp refresh */
 async function postAuth(path: string) {
@@ -22,7 +22,10 @@ export default function AuthInitializer() {
         synced.current = true;
 
         const syncUser = async () => {
-            const { accessToken, isAuthenticated, setAuth, clearAuth } = useAuthStore.getState();
+            if (hasLoggedOutFlag()) return;
+
+            const { accessToken, isAuthenticated, setAuth, clearAuth } =
+                useAuthStore.getState();
 
             const tryRefreshAndRestore = async (): Promise<boolean> => {
                 try {
@@ -38,8 +41,9 @@ export default function AuthInitializer() {
                         }
                     }
                 } catch (err: unknown) {
-                    const code = (err as { response?: { data?: { error?: { code?: string } } } })
-                        ?.response?.data?.error?.code;
+                    const code = (
+                        err as { response?: { data?: { error?: { code?: string } } } }
+                    )?.response?.data?.error?.code;
 
                     if (code === 'INVALID_REFRESH_TOKEN') {
                         clearAuth();

@@ -12,6 +12,8 @@ import {
     useMoviesByCountry,
     useMoviesByGenre,
 } from '~/hooks/useMovies';
+import { LoadingSpinner } from '~/styles/components/layout.styles';
+import { HeroLoadingPlaceholder, HomeSectionsContainer } from '~/styles/components/hero.styles';
 
 export default function HomeClient() {
     const { data: featured, isLoading: featuredLoading } = useFeaturedMovies();
@@ -25,18 +27,15 @@ export default function HomeClient() {
 
     return (
         <div>
-            {/* Hero */}
             {featuredLoading ? (
-                <div style={{ height: 'clamp(280px, 55vw, 600px)', background: 'linear-gradient(135deg, #0a0a0f, #1a1a2e)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: '40px', height: '40px', border: '3px solid rgba(229,9,20,0.3)', borderTopColor: '#e50914', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                    <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-                </div>
+                <HeroLoadingPlaceholder>
+                    <LoadingSpinner $size={40} />
+                </HeroLoadingPlaceholder>
             ) : featured?.length ? (
                 <HeroCarousel movies={featured} />
             ) : null}
 
-            {/* Sections */}
-            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: 'clamp(24px, 4vw, 48px) clamp(16px, 3vw, 32px) 0' }}>
+            <HomeSectionsContainer>
                 <MovieRow
                     title="Phim mới cập nhật"
                     movies={latest?.items}
@@ -86,7 +85,7 @@ export default function HomeClient() {
                     viewAllHref="/search?genre=hanh-dong"
                     accentColor="#22c55e"
                 />
-            </div>
+            </HomeSectionsContainer>
         </div>
     );
 }

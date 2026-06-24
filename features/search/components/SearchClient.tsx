@@ -8,6 +8,29 @@ import { useResponsive } from '~/hooks/useResponsive';
 import MovieGrid from '~/components/movie/MovieGrid';
 import Pagination from '~/components/ui/Pagination';
 import { MovieType, SearchParams } from '~/types/movie';
+import {
+    SearchPageContainer,
+    SearchPageTitle,
+    SearchBarRow,
+    SearchInputWrap,
+    SearchInputIcon,
+    SearchInput,
+    FilterToggleButton,
+    FilterDot,
+    FilterPanel,
+    FilterGrid,
+    FilterField,
+    FilterLabel,
+    FilterSelect,
+    ClearFiltersButton,
+    TypePillRow,
+    TypePill,
+    ResultsMeta,
+    NoResultsBox,
+    NoResultsEmoji,
+    SearchFallback,
+    SearchFallbackBar,
+} from '~/styles/components/search.styles';
 
 const GENRES = [
     { label: 'Hành động', value: 'hanh-dong' },
@@ -57,7 +80,6 @@ function SearchClientInner() {
     const router = useRouter();
     const { isMobile } = useResponsive();
 
-    // URL là nguồn dữ liệu chính — đồng bộ với header nav
     const genre = searchParamsHook.get('genre') ?? '';
     const country = searchParamsHook.get('country') ?? '';
     const year = searchParamsHook.get('year') ?? '';
@@ -74,7 +96,6 @@ function SearchClientInner() {
     const isFirstQueryRender = useRef(true);
     const urlQuery = searchParamsHook.get('q') ?? '';
 
-    // Đồng bộ ô tìm kiếm khi URL đổi (header nav, back/forward)
     useEffect(() => {
         setQuery(urlQuery);
     }, [urlQuery]);
@@ -150,131 +171,119 @@ function SearchClientInner() {
     };
 
     const hasActiveFilters = !!(genre || country || year || type);
-
-    const selectStyle: React.CSSProperties = {
-        width: '100%', padding: '9px 12px',
-        background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '8px', color: '#fff', fontSize: '13px',
-        cursor: 'pointer', outline: 'none',
-        appearance: 'none',
-    };
+    const filterActive = showFilters || hasActiveFilters;
 
     return (
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '16px' : '24px' }}>
-            <h1 style={{ color: 'white', fontSize: isMobile ? '22px' : '28px', fontWeight: 700, marginBottom: '20px' }}>
+        <SearchPageContainer $isMobile={isMobile}>
+            <SearchPageTitle $isMobile={isMobile}>
                 {debouncedQuery ? `Kết quả: "${debouncedQuery}"` : 'Tìm kiếm phim'}
-            </h1>
+            </SearchPageTitle>
 
-            {/* Search + Filter bar */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', alignItems: 'center' }}>
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#606070' }} />
-                    <input
+            <SearchBarRow>
+                <SearchInputWrap>
+                    <SearchInputIcon>
+                        <Search size={16} />
+                    </SearchInputIcon>
+                    <SearchInput
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Tìm kiếm tên phim..."
-                        style={{
-                            width: '100%', padding: '12px 12px 12px 40px',
-                            background: '#111118', border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '10px', color: '#fff', fontSize: '15px', outline: 'none',
-                        }}
-                        onFocus={(e) => (e.target.style.borderColor = 'rgba(229,9,20,0.5)')}
-                        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
                     />
-                </div>
-                <button
+                </SearchInputWrap>
+                <FilterToggleButton
                     onClick={() => setShowFilters(!showFilters)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '12px 16px', borderRadius: '10px', cursor: 'pointer',
-                        background: showFilters || hasActiveFilters ? 'rgba(229,9,20,0.2)' : 'rgba(255,255,255,0.06)',
-                        border: `1px solid ${showFilters || hasActiveFilters ? 'rgba(229,9,20,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                        color: showFilters || hasActiveFilters ? '#e50914' : '#a0a0b0',
-                        fontWeight: 500, fontSize: '13px', whiteSpace: 'nowrap', flexShrink: 0,
-                    }}
+                    $active={filterActive}
                 >
                     <SlidersHorizontal size={15} />
                     {!isMobile && 'Bộ lọc'}
-                    {hasActiveFilters && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#e50914', flexShrink: 0 }} />}
-                </button>
-            </div>
+                    {hasActiveFilters && <FilterDot />}
+                </FilterToggleButton>
+            </SearchBarRow>
 
-            {/* Filter panel */}
             {showFilters && (
-                <div style={{
-                    background: '#111118', border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px', padding: '16px', marginBottom: '20px',
-                }}>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
-                        gap: '12px',
-                    }}>
-                        <div>
-                            <label style={{ display: 'block', color: '#a0a0b0', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>THỂ LOẠI</label>
-                            <select value={genre} onChange={(e) => updateFilter('genre', e.target.value)} style={selectStyle}>
+                <FilterPanel>
+                    <FilterGrid $isMobile={isMobile}>
+                        <FilterField>
+                            <FilterLabel>THỂ LOẠI</FilterLabel>
+                            <FilterSelect
+                                value={genre}
+                                onChange={(e) => updateFilter('genre', e.target.value)}
+                            >
                                 <option value="">Tất cả</option>
-                                {GENRES.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', color: '#a0a0b0', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>QUỐC GIA</label>
-                            <select value={country} onChange={(e) => updateFilter('country', e.target.value)} style={selectStyle}>
+                                {GENRES.map((g) => (
+                                    <option key={g.value} value={g.value}>
+                                        {g.label}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                        </FilterField>
+                        <FilterField>
+                            <FilterLabel>QUỐC GIA</FilterLabel>
+                            <FilterSelect
+                                value={country}
+                                onChange={(e) => updateFilter('country', e.target.value)}
+                            >
                                 <option value="">Tất cả</option>
-                                {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', color: '#a0a0b0', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>NĂM</label>
-                            <select value={year} onChange={(e) => updateFilter('year', e.target.value)} style={selectStyle}>
+                                {COUNTRIES.map((c) => (
+                                    <option key={c.value} value={c.value}>
+                                        {c.label}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                        </FilterField>
+                        <FilterField>
+                            <FilterLabel>NĂM</FilterLabel>
+                            <FilterSelect
+                                value={year}
+                                onChange={(e) => updateFilter('year', e.target.value)}
+                            >
                                 <option value="">Tất cả</option>
-                                {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label style={{ display: 'block', color: '#a0a0b0', fontSize: '11px', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>LOẠI PHIM</label>
-                            <select value={type} onChange={(e) => updateFilter('type', e.target.value)} style={selectStyle}>
+                                {YEARS.map((y) => (
+                                    <option key={y} value={y}>
+                                        {y}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                        </FilterField>
+                        <FilterField>
+                            <FilterLabel>LOẠI PHIM</FilterLabel>
+                            <FilterSelect
+                                value={type}
+                                onChange={(e) => updateFilter('type', e.target.value)}
+                            >
                                 <option value="">Tất cả</option>
-                                {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                            </select>
-                        </div>
-                    </div>
+                                {TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>
+                                        {t.label}
+                                    </option>
+                                ))}
+                            </FilterSelect>
+                        </FilterField>
+                    </FilterGrid>
 
                     {hasActiveFilters && (
-                        <button
-                            onClick={clearFilters}
-                            style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '12px', color: '#e50914', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}
-                        >
+                        <ClearFiltersButton onClick={clearFilters}>
                             <X size={13} /> Xóa bộ lọc
-                        </button>
+                        </ClearFiltersButton>
                     )}
-                </div>
+                </FilterPanel>
             )}
 
-            {/* Quick type filter pills */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            <TypePillRow>
                 {TYPES.map((t) => (
-                    <button
+                    <TypePill
                         key={t.value}
                         onClick={() => toggleTypeFilter(t.value as MovieType)}
-                        style={{
-                            padding: '6px 14px', borderRadius: '20px', border: '1px solid', cursor: 'pointer',
-                            fontSize: '12px', fontWeight: 500, transition: 'all 0.15s',
-                            background: type === t.value ? 'rgba(229,9,20,0.2)' : 'rgba(255,255,255,0.04)',
-                            borderColor: type === t.value ? 'rgba(229,9,20,0.5)' : 'rgba(255,255,255,0.1)',
-                            color: type === t.value ? '#fff' : '#a0a0b0',
-                        }}
+                        $active={type === t.value}
                     >
                         {t.label}
-                    </button>
+                    </TypePill>
                 ))}
-            </div>
+            </TypePillRow>
 
-            {/* Results */}
             {hasFilters ? (
                 <>
-                    <p style={{ color: '#606070', fontSize: '13px', marginBottom: '16px' }}>
+                    <ResultsMeta>
                         {searchLoading
                             ? 'Đang tìm...'
                             : (() => {
@@ -284,13 +293,13 @@ function SearchClientInner() {
                                   const to = Math.min(page * 24, total);
                                   return `${from}–${to} / ${total.toLocaleString('vi-VN')} kết quả`;
                               })()}
-                    </p>
+                    </ResultsMeta>
                     <MovieGrid movies={searchResults?.items ?? []} isLoading={searchLoading} />
                     {!searchLoading && searchResults?.items.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '60px 0', color: '#606070' }}>
-                            <p style={{ fontSize: '40px', marginBottom: '12px' }}>🎬</p>
+                        <NoResultsBox>
+                            <NoResultsEmoji>🎬</NoResultsEmoji>
                             <p>Không tìm thấy phim phù hợp</p>
-                        </div>
+                        </NoResultsBox>
                     )}
                     <Pagination
                         page={page}
@@ -301,21 +310,23 @@ function SearchClientInner() {
                 </>
             ) : (
                 <>
-                    <p style={{ color: '#606070', fontSize: '13px', marginBottom: '16px' }}>Phim mới cập nhật</p>
+                    <ResultsMeta>Phim mới cập nhật</ResultsMeta>
                     <MovieGrid movies={latestMovies?.items ?? []} isLoading={latestLoading} />
                 </>
             )}
-        </div>
+        </SearchPageContainer>
     );
 }
 
 export default function SearchClient() {
     return (
-        <Suspense fallback={
-            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
-                <div style={{ height: '40px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', marginBottom: '16px' }} />
-            </div>
-        }>
+        <Suspense
+            fallback={
+                <SearchFallback>
+                    <SearchFallbackBar />
+                </SearchFallback>
+            }
+        >
             <SearchClientInner />
         </Suspense>
     );

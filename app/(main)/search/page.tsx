@@ -5,7 +5,7 @@ export const metadata = { title: 'Tìm kiếm phim | CineHub' };
 
 export default function SearchPage() {
     return (
-        <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0a0a0f' }} />}>
+        <Suspense fallback={<div className="min-h-screen bg-background" />}>
             <SearchClient />
         </Suspense>
     );

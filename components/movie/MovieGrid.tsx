@@ -4,6 +4,7 @@ import React from 'react';
 import { NormalizedMovie } from '~/types/movie';
 import MovieCard from './MovieCard';
 import { MovieGridSkeleton } from './MovieSkeleton';
+import { MovieGridWrap } from '~/styles/components/movie.styles';
 
 interface MovieGridProps {
     movies: NormalizedMovie[];
@@ -16,14 +17,10 @@ export default function MovieGrid({ movies, isLoading, skeletonCount = 12 }: Mov
     if (isLoading) return <MovieGridSkeleton count={skeletonCount} />;
 
     return (
-        <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: '12px',
-        }}>
+        <MovieGridWrap>
             {movies.map((movie) => (
                 <MovieCard key={movie.id} movie={movie} />
             ))}
-        </div>
+        </MovieGridWrap>
     );
 }

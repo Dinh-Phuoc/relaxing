@@ -1,6 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --color-background: #0a0a0f;
+  --color-surface: #111118;
+  --color-card: #1a1a2e;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-accent-red: #e50914;
+  --color-accent-gold: #f5c518;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0b0;
+  --color-text-muted: #606070;
+  --color-error: #e57080;
+  --color-error-bg: rgba(229, 9, 20, 0.1);
+  --color-error-border: rgba(229, 9, 20, 0.3);
+}
+
 :root {
   --background: #0a0a0f;
   --surface: #111118;
@@ -15,9 +30,23 @@
 
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
   list-style: none;
+}
+
+@layer components {
+  .ui-input {
+    padding-block: 10px;
+    padding-inline: 16px;
+  }
+
+  .ui-input--left-icon {
+    padding-left: 42px;
+  }
+
+  .ui-input--right-icon {
+    padding-right: 40px;
+  }
 }
 
 html {

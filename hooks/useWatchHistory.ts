@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '~/stores/auth.store';
+import {
+    AUTH_CHANGED_EVENT,
+    getUserStorageKey,
+} from '~/lib/storage/user-local-storage';
 
 export interface WatchHistoryItem {
     id: string;
@@ -32,24 +37,24 @@ export interface UpsertWatchHistoryInput {
     completed?: boolean;
 }
 
-const STORAGE_KEY = 'cinehub_watch_history';
+const STORAGE_BASE_KEY = 'cinehub_watch_history';
 const MAX_ITEMS = 100;
 
 function makeHistoryId(source: string, movieId: string): string {
     return `${source}:${movieId}`;
 }
 
-function loadHistory(): WatchHistoryItem[] {
-    if (typeof window === 'undefined') return [];
+function loadHistory(storageKey: string | null): WatchHistoryItem[] {
+    if (!storageKey || typeof window === 'undefined') return [];
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]');
+        return JSON.parse(localStorage.getItem(storageKey) ?? '[]');
     } catch {
         return [];
     }
 }
 
-function saveHistory(items: WatchHistoryItem[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+function saveHistory(storageKey: string, items: WatchHistoryItem[]): void {
+    localStorage.setItem(storageKey, JSON.stringify(items));
 }
 
 function sortHistory(items: WatchHistoryItem[]): WatchHistoryItem[] {
@@ -57,70 +62,86 @@ function sortHistory(items: WatchHistoryItem[]): WatchHistoryItem[] {
 }
 
 export function useWatchHistory() {
+    const userId = useAuthStore((state) => state.user?._id ?? null);
+    const storageKey = getUserStorageKey(STORAGE_BASE_KEY, userId);
     const [history, setHistory] = useState<WatchHistoryItem[]>([]);
 
     const refresh = useCallback(() => {
-        setHistory(sortHistory(loadHistory()));
-    }, []);
+        setHistory(sortHistory(loadHistory(storageKey)));
+    }, [storageKey]);
 
     useEffect(() => {
         refresh();
 
         const onStorage = (e: StorageEvent) => {
-            if (e.key === STORAGE_KEY) refresh();
+            if (storageKey && e.key === storageKey) refresh();
         };
         const onFocus = () => refresh();
+        const onAuthChanged = () => refresh();
 
         window.addEventListener('storage', onStorage);
         window.addEventListener('focus', onFocus);
+        window.addEventListener(AUTH_CHANGED_EVENT, onAuthChanged);
         return () => {
             window.removeEventListener('storage', onStorage);
             window.removeEventListener('focus', onFocus);
+            window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChanged);
         };
-    }, [refresh]);
+    }, [refresh, storageKey]);
 
-    const upsertHistory = useCallback((input: UpsertWatchHistoryInput) => {
-        const id = makeHistoryId(input.source, input.movieId);
-        const now = Date.now();
+    const upsertHistory = useCallback(
+        (input: UpsertWatchHistoryInput) => {
+            if (!storageKey) return;
 
-        setHistory((prev) => {
-            const base = prev.length > 0 ? prev : loadHistory();
-            const existing = base.find((item) => item.id === id);
-            const updated: WatchHistoryItem = {
-                id,
-                movieId: input.movieId,
-                slug: input.slug,
-                source: input.source,
-                title: input.title,
-                poster: input.poster,
-                episodeSlug: input.episodeSlug ?? existing?.episodeSlug,
-                episodeName: input.episodeName ?? existing?.episodeName,
-                serverIndex: input.serverIndex ?? existing?.serverIndex ?? 0,
-                progressSeconds: input.progressSeconds ?? existing?.progressSeconds ?? 0,
-                durationSeconds: input.durationSeconds ?? existing?.durationSeconds,
-                completed: input.completed ?? existing?.completed ?? false,
-                lastWatchedAt: now,
-            };
+            const id = makeHistoryId(input.source, input.movieId);
+            const now = Date.now();
 
-            const without = base.filter((item) => item.id !== id);
-            const next = sortHistory([updated, ...without]).slice(0, MAX_ITEMS);
-            saveHistory(next);
-            return next;
-        });
-    }, []);
+            setHistory((prev) => {
+                const base = prev.length > 0 ? prev : loadHistory(storageKey);
+                const existing = base.find((item) => item.id === id);
+                const updated: WatchHistoryItem = {
+                    id,
+                    movieId: input.movieId,
+                    slug: input.slug,
+                    source: input.source,
+                    title: input.title,
+                    poster: input.poster,
+                    episodeSlug: input.episodeSlug ?? existing?.episodeSlug,
+                    episodeName: input.episodeName ?? existing?.episodeName,
+                    serverIndex: input.serverIndex ?? existing?.serverIndex ?? 0,
+                    progressSeconds: input.progressSeconds ?? existing?.progressSeconds ?? 0,
+                    durationSeconds: input.durationSeconds ?? existing?.durationSeconds,
+                    completed: input.completed ?? existing?.completed ?? false,
+                    lastWatchedAt: now,
+                };
 
-    const removeHistory = useCallback((id: string) => {
-        setHistory((prev) => {
-            const next = prev.filter((item) => item.id !== id);
-            saveHistory(next);
-            return next;
-        });
-    }, []);
+                const without = base.filter((item) => item.id !== id);
+                const next = sortHistory([updated, ...without]).slice(0, MAX_ITEMS);
+                saveHistory(storageKey, next);
+                return next;
+            });
+        },
+        [storageKey],
+    );
+
+    const removeHistory = useCallback(
+        (id: string) => {
+            if (!storageKey) return;
+            setHistory((prev) => {
+                const base = prev.length > 0 ? prev : loadHistory(storageKey);
+                const next = base.filter((item) => item.id !== id);
+                saveHistory(storageKey, next);
+                return next;
+            });
+        },
+        [storageKey],
+    );
 
     const clearHistory = useCallback(() => {
-        saveHistory([]);
+        if (!storageKey) return;
+        saveHistory(storageKey, []);
         setHistory([]);
-    }, []);
+    }, [storageKey]);
 
     return { history, upsertHistory, removeHistory, clearHistory };
 }

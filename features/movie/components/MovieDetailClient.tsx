@@ -8,6 +8,53 @@ import { useMovieDetail, useRelatedMovies } from '~/hooks/useMovies';
 import { useResponsive } from '~/hooks/useResponsive';
 import { useFavorites } from '~/hooks/useFavorites';
 import MovieSection from '~/components/movie/MovieSection';
+import {
+    FullPageCenter,
+    FullPageCenterColumn,
+    LoadingSpinner,
+    AccentLink,
+    NotFoundText,
+} from '~/styles/components/layout.styles';
+import {
+    DetailPage,
+    BackdropSection,
+    BackdropGradient,
+    DetailContainer,
+    HeroGrid,
+    PosterColumn,
+    PosterFrame,
+    InfoColumn,
+    GenreRow,
+    GenreLink,
+    DetailTitle,
+    OriginalTitle,
+    MetaRow,
+    MetaItem,
+    MetaRating,
+    QualityBadge,
+    StatusBadge,
+    ActionRow,
+    WatchLink,
+    FavoriteButton,
+    DescriptionBlock,
+    DescriptionText,
+    ToggleDescButton,
+    CastRow,
+    CastLabel,
+    CastText,
+    DirectorRow,
+    DirectorLabel,
+    DirectorText,
+    EpisodesSection,
+    SectionTitle,
+    SectionAccentBar,
+    EpisodeGroupBlock,
+    EpisodeGroupTitle,
+    EpisodeLinkRow,
+    EpisodeLink,
+    ShowMoreEpButton,
+    RelatedSection,
+} from '~/styles/components/movie-detail.styles';
 
 interface Props {
     slug: string;
@@ -39,19 +86,18 @@ export default function MovieDetailClient({ slug, source }: Props) {
 
     if (isLoading) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '48px', height: '48px', border: '3px solid rgba(229,9,20,0.3)', borderTopColor: '#e50914', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-            </div>
+            <FullPageCenter>
+                <LoadingSpinner />
+            </FullPageCenter>
         );
     }
 
     if (error || !movie) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-                <p style={{ color: '#a0a0b0', fontSize: '18px' }}>Không tìm thấy phim</p>
-                <Link href="/" style={{ color: '#e50914', textDecoration: 'none' }}>← Về trang chủ</Link>
-            </div>
+            <FullPageCenterColumn>
+                <NotFoundText>Không tìm thấy phim</NotFoundText>
+                <AccentLink href="/">← Về trang chủ</AccentLink>
+            </FullPageCenterColumn>
         );
     }
 
@@ -59,9 +105,8 @@ export default function MovieDetailClient({ slug, source }: Props) {
     const backdropHeight = isMobile ? '280px' : isTablet ? '380px' : '480px';
 
     return (
-        <div style={{ minHeight: '100vh' }}>
-            {/* Backdrop */}
-            <div style={{ position: 'relative', height: backdropHeight, overflow: 'hidden' }}>
+        <DetailPage>
+            <BackdropSection $height={backdropHeight}>
                 <Image
                     src={movie.backdrop || movie.poster}
                     alt={movie.title}
@@ -70,189 +115,174 @@ export default function MovieDetailClient({ slug, source }: Props) {
                     style={{ objectFit: 'cover', objectPosition: 'center top' }}
                     sizes="100vw"
                 />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(10,10,15,0.2) 0%, rgba(10,10,15,0.6) 50%, rgba(10,10,15,1) 100%)' }} />
-            </div>
+                <BackdropGradient />
+            </BackdropSection>
 
-            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: isMobile ? '0 16px' : '0 24px' }}>
-                {/* Hero info */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isSingleColumn ? '1fr' : '200px 1fr',
-                    gap: '32px',
-                    marginTop: isSingleColumn ? '-80px' : '-180px',
-                    position: 'relative', zIndex: 10,
-                    alignItems: 'start',
-                }}>
-                    {/* Poster — desktop only */}
+            <DetailContainer $isMobile={isMobile}>
+                <HeroGrid $isSingleColumn={isSingleColumn}>
                     {!isSingleColumn && (
-                        <div style={{ width: '200px', flexShrink: 0 }}>
-                            <div style={{ borderRadius: '12px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.8)', border: '2px solid rgba(255,255,255,0.1)', aspectRatio: '2/3', position: 'relative' }}>
-                                <Image src={movie.poster} alt={movie.title} fill style={{ objectFit: 'cover' }} sizes="200px" />
-                            </div>
-                        </div>
+                        <PosterColumn>
+                            <PosterFrame>
+                                <Image
+                                    src={movie.poster}
+                                    alt={movie.title}
+                                    fill
+                                    style={{ objectFit: 'cover' }}
+                                    sizes="200px"
+                                />
+                            </PosterFrame>
+                        </PosterColumn>
                     )}
 
-                    {/* Info */}
-                    <div style={{ paddingTop: isSingleColumn ? '0' : '120px' }}>
-                        {/* Genres */}
-                        <div style={{ display: 'flex', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                    <InfoColumn $isSingleColumn={isSingleColumn}>
+                        <GenreRow>
                             {movie.genres?.slice(0, 3).map((g) => (
-                                <Link key={g} href={`/search?genre=${encodeURIComponent(g)}`}
-                                    style={{ background: 'rgba(229,9,20,0.12)', border: '1px solid rgba(229,9,20,0.25)', color: '#e57080', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', textDecoration: 'none' }}>
+                                <GenreLink key={g} href={`/search?genre=${encodeURIComponent(g)}`}>
                                     {g}
-                                </Link>
+                                </GenreLink>
                             ))}
-                        </div>
+                        </GenreRow>
 
-                        <h1 style={{ color: 'white', fontSize: isMobile ? '22px' : isTablet ? '28px' : '36px', fontWeight: 800, lineHeight: 1.2, marginBottom: '6px' }}>
+                        <DetailTitle $isMobile={isMobile} $isTablet={isTablet}>
                             {movie.title}
-                        </h1>
+                        </DetailTitle>
 
                         {movie.originalTitle && movie.originalTitle !== movie.title && (
-                            <p style={{ color: '#a0a0b0', fontSize: isMobile ? '13px' : '15px', marginBottom: '12px' }}>
-                                {movie.originalTitle}
-                            </p>
+                            <OriginalTitle $isMobile={isMobile}>{movie.originalTitle}</OriginalTitle>
                         )}
 
-                        {/* Meta */}
-                        <div style={{ display: 'flex', gap: isMobile ? '12px' : '20px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                            {movie.year && <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#a0a0b0', fontSize: '13px' }}><Calendar size={13} /> {movie.year}</span>}
-                            {movie.duration && <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#a0a0b0', fontSize: '13px' }}><Clock size={13} /> {movie.duration}</span>}
-                            {movie.rating && <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#f5c518', fontSize: '13px' }}><Star size={13} fill="#f5c518" /> {movie.rating.toFixed(1)}</span>}
-                            {movie.countries?.length ? <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#a0a0b0', fontSize: '13px' }}><Globe size={13} /> {movie.countries.join(', ')}</span> : null}
-                            {movie.quality && <span style={{ background: '#e50914', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>{movie.quality}</span>}
-                            {movie.status && (
-                                <span style={{ background: movie.status === 'completed' ? 'rgba(34,197,94,0.15)' : 'rgba(249,115,22,0.15)', color: movie.status === 'completed' ? '#22c55e' : '#f97316', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
-                                    {movie.status === 'completed' ? 'Hoàn thành' : 'Đang chiếu'}
-                                </span>
+                        <MetaRow $isMobile={isMobile}>
+                            {movie.year && (
+                                <MetaItem>
+                                    <Calendar size={13} /> {movie.year}
+                                </MetaItem>
                             )}
-                        </div>
+                            {movie.duration && (
+                                <MetaItem>
+                                    <Clock size={13} /> {movie.duration}
+                                </MetaItem>
+                            )}
+                            {movie.rating && (
+                                <MetaRating>
+                                    <Star size={13} fill="#f5c518" /> {movie.rating.toFixed(1)}
+                                </MetaRating>
+                            )}
+                            {movie.countries?.length ? (
+                                <MetaItem>
+                                    <Globe size={13} /> {movie.countries.join(', ')}
+                                </MetaItem>
+                            ) : null}
+                            {movie.quality && <QualityBadge>{movie.quality}</QualityBadge>}
+                            {movie.status && (
+                                <StatusBadge $completed={movie.status === 'completed'}>
+                                    {movie.status === 'completed' ? 'Hoàn thành' : 'Đang chiếu'}
+                                </StatusBadge>
+                            )}
+                        </MetaRow>
 
-                        {/* Actions — chỉ 2 button: Xem phim + Yêu thích */}
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center' }}>
-                            <Link
+                        <ActionRow>
+                            <WatchLink
                                 href={`/watch/${movie.slug}?source=${movie.source}`}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px',
-                                    padding: isMobile ? '10px 20px' : '12px 24px',
-                                    borderRadius: '10px', background: 'linear-gradient(135deg, #e50914, #b20710)',
-                                    color: 'white', textDecoration: 'none', fontWeight: 700,
-                                    fontSize: isMobile ? '14px' : '15px',
-                                    boxShadow: '0 4px 20px rgba(229,9,20,0.4)',
-                                }}
+                                $isMobile={isMobile}
                             >
                                 <Play size={16} fill="white" /> Xem phim
-                            </Link>
+                            </WatchLink>
 
-                            <button
+                            <FavoriteButton
                                 onClick={handleFavorite}
                                 title={favorited ? 'Bỏ yêu thích' : 'Thêm yêu thích'}
-                                style={{
-                                    width: 44, height: 44, borderRadius: '10px', flexShrink: 0,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    background: favorited ? 'rgba(229,9,20,0.2)' : 'rgba(255,255,255,0.08)',
-                                    border: `1px solid ${favorited ? 'rgba(229,9,20,0.5)' : 'rgba(255,255,255,0.15)'}`,
-                                    color: favorited ? '#e50914' : '#a0a0b0', cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                }}
+                                $favorited={favorited}
                             >
                                 <Heart size={18} fill={favorited ? '#e50914' : 'none'} />
-                            </button>
-                        </div>
+                            </FavoriteButton>
+                        </ActionRow>
 
-                        {/* Description */}
                         {description && (
-                            <div style={{ marginBottom: '20px' }}>
-                                <p style={{
-                                    color: '#c0c0d0', fontSize: '13px', lineHeight: '1.8',
-                                    overflow: showFullDesc ? 'visible' : 'hidden',
-                                    display: showFullDesc ? 'block' : '-webkit-box',
-                                    WebkitLineClamp: showFullDesc ? undefined : 3,
-                                    WebkitBoxOrient: 'vertical' as const,
-                                }}>
-                                    {description}
-                                </p>
+                            <DescriptionBlock>
+                                <DescriptionText $expanded={showFullDesc}>{description}</DescriptionText>
                                 {description.length > 200 && (
-                                    <button onClick={() => setShowFullDesc(!showFullDesc)}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#e50914', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', marginTop: '6px' }}>
-                                        {showFullDesc ? <><ChevronUp size={13} /> Thu gọn</> : <><ChevronDown size={13} /> Xem thêm</>}
-                                    </button>
+                                    <ToggleDescButton onClick={() => setShowFullDesc(!showFullDesc)}>
+                                        {showFullDesc ? (
+                                            <>
+                                                <ChevronUp size={13} /> Thu gọn
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ChevronDown size={13} /> Xem thêm
+                                            </>
+                                        )}
+                                    </ToggleDescButton>
                                 )}
-                            </div>
+                            </DescriptionBlock>
                         )}
 
-                        {/* Cast */}
                         {movie.actors?.length ? (
-                            <div style={{ marginBottom: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                                <span style={{ color: '#a0a0b0', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                            <CastRow>
+                                <CastLabel>
                                     <Users size={12} /> Diễn viên:
-                                </span>
-                                <p style={{ color: '#c0c0d0', fontSize: '12px', margin: 0 }}>{movie.actors.slice(0, 8).join(', ')}</p>
-                            </div>
+                                </CastLabel>
+                                <CastText>{movie.actors.slice(0, 8).join(', ')}</CastText>
+                            </CastRow>
                         ) : null}
 
                         {movie.directors?.length ? (
-                            <div style={{ marginBottom: '10px' }}>
-                                <span style={{ color: '#a0a0b0', fontSize: '12px', fontWeight: 600 }}>Đạo diễn: </span>
-                                <span style={{ color: '#c0c0d0', fontSize: '12px' }}>{movie.directors.join(', ')}</span>
-                            </div>
+                            <DirectorRow>
+                                <DirectorLabel>Đạo diễn: </DirectorLabel>
+                                <DirectorText>{movie.directors.join(', ')}</DirectorText>
+                            </DirectorRow>
                         ) : null}
-                    </div>
-                </div>
+                    </InfoColumn>
+                </HeroGrid>
 
-                {/* Episodes */}
                 {movie.episodeGroups && movie.episodeGroups.length > 0 && (
-                    <div style={{ marginTop: '40px' }}>
-                        <h2 style={{ color: 'white', fontSize: isMobile ? '16px' : '20px', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '4px', height: '22px', background: '#e50914', borderRadius: '2px' }} />
+                    <EpisodesSection>
+                        <SectionTitle $isMobile={isMobile}>
+                            <SectionAccentBar />
                             Danh sách tập
-                        </h2>
+                        </SectionTitle>
                         {movie.episodeGroups.map((group) => {
-                            const displayEps = showAllEps ? group.episodes : group.episodes.slice(0, 50);
+                            const displayEps = showAllEps
+                                ? group.episodes
+                                : group.episodes.slice(0, 50);
                             return (
-                                <div key={group.serverIndex} style={{ marginBottom: '20px' }}>
+                                <EpisodeGroupBlock key={group.serverIndex}>
                                     {movie.episodeGroups!.length > 1 && (
-                                        <h3 style={{ color: '#a0a0b0', fontSize: '13px', marginBottom: '10px', fontWeight: 600 }}>{group.serverName}</h3>
+                                        <EpisodeGroupTitle>{group.serverName}</EpisodeGroupTitle>
                                     )}
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    <EpisodeLinkRow>
                                         {displayEps.map((ep) => (
-                                            <Link
+                                            <EpisodeLink
                                                 key={ep.slug}
                                                 href={`/watch/${movie.slug}?source=${movie.source}&ep=${ep.slug}&server=${group.serverIndex}`}
-                                                style={{
-                                                    padding: isMobile ? '7px 12px' : '8px 16px', borderRadius: '7px',
-                                                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                                                    color: '#c0c0d0', textDecoration: 'none', fontSize: '12px',
-                                                    fontWeight: 500, minWidth: '52px', textAlign: 'center', transition: 'all 0.15s',
-                                                }}
-                                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(229,9,20,0.2)'; e.currentTarget.style.borderColor = 'rgba(229,9,20,0.4)'; e.currentTarget.style.color = '#fff'; }}
-                                                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#c0c0d0'; }}
+                                                $isMobile={isMobile}
                                             >
                                                 {ep.name}
-                                            </Link>
+                                            </EpisodeLink>
                                         ))}
                                         {group.episodes.length > 50 && (
-                                            <button
-                                                onClick={() => setShowAllEps(!showAllEps)}
-                                                style={{ padding: '8px 16px', borderRadius: '7px', background: 'rgba(229,9,20,0.15)', border: '1px solid rgba(229,9,20,0.3)', color: '#e50914', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
-                                            >
-                                                {showAllEps ? '▲ Thu gọn' : `+${group.episodes.length - 50} tập nữa`}
-                                            </button>
+                                            <ShowMoreEpButton onClick={() => setShowAllEps(!showAllEps)}>
+                                                {showAllEps
+                                                    ? '▲ Thu gọn'
+                                                    : `+${group.episodes.length - 50} tập nữa`}
+                                            </ShowMoreEpButton>
                                         )}
-                                    </div>
-                                </div>
+                                    </EpisodeLinkRow>
+                                </EpisodeGroupBlock>
                             );
                         })}
-                    </div>
+                    </EpisodesSection>
                 )}
 
-                {/* Related */}
                 {related && related.length > 0 && (
-                    <div style={{ marginTop: '40px' }}>
-                        <MovieSection title="Phim liên quan" movies={related} viewAllHref={`/search?genre=${movie.genres?.[0] ?? ''}`} />
-                    </div>
+                    <RelatedSection>
+                        <MovieSection
+                            title="Phim liên quan"
+                            movies={related}
+                            viewAllHref={`/search?genre=${movie.genres?.[0] ?? ''}`}
+                        />
+                    </RelatedSection>
                 )}
-            </div>
-        </div>
+            </DetailContainer>
+        </DetailPage>
     );
 }

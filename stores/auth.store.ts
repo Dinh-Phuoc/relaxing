@@ -4,6 +4,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { User } from '~/types/auth';
 import { setAccessToken } from '~/lib/axios/client';
+import { clearLoggedOutFlag } from '~/lib/auth/session-flags';
+import { dispatchAuthChanged } from '~/lib/storage/user-local-storage';
 
 interface AuthStore {
     user: User | null;
@@ -21,12 +23,15 @@ export const useAuthStore = create<AuthStore>()(
             accessToken: null,
             isAuthenticated: false,
             setAuth: (user, token) => {
+                clearLoggedOutFlag();
                 setAccessToken(token);
                 set({ user, accessToken: token, isAuthenticated: true });
+                dispatchAuthChanged();
             },
             clearAuth: () => {
                 setAccessToken(null);
                 set({ user: null, accessToken: null, isAuthenticated: false });
+                dispatchAuthChanged();
             },
             updateUser: (partial) =>
                 set((state) => ({

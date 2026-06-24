@@ -3,10 +3,10 @@ import { verifyAccessToken, verifyRefreshToken } from '~/lib/auth/jwt';
 import { REFRESH_TOKEN_COOKIE } from '~/lib/auth/cookies';
 
 /** Trang công khai — không cần đăng nhập */
-const PUBLIC_ROUTES = ['/login', '/register'];
+const PUBLIC_ROUTES = ['/login'];
 
 /** API công khai — phục vụ đăng nhập / refresh session */
-const PUBLIC_API_PREFIXES = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh', '/api/auth/logout'];
+const PUBLIC_API_PREFIXES = ['/api/auth/login', '/api/auth/refresh', '/api/auth/logout'];
 
 /** Routes chỉ dành cho admin */
 const ADMIN_ROUTES = ['/admin'];
@@ -46,6 +46,26 @@ export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const { isAuthenticated, userRole } = resolveAuth(request);
 
+    // Đã bỏ đăng ký công khai — chuyển về trang login
+    if (pathname.startsWith('/register')) {
+        return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    // API đăng ký công khai đã tắt
+    if (pathname.startsWith('/api/auth/register')) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: {
+                    code: 'FORBIDDEN',
+                    message: 'Đăng ký công khai đã bị vô hiệu hóa. Vui lòng liên hệ admin.',
+                    statusCode: 403,
+                },
+            },
+            { status: 403 },
+        );
+    }
+
     const isApiRoute = pathname.startsWith('/api');
     const isPublicPage = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
     const isPublicApi = PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -75,8 +95,8 @@ export function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Đã đăng nhập — không vào lại login/register
-    if (isPublicPage) {
+    // Đã đăng nhập — không vào lại login
+    if (pathname.startsWith('/login')) {
         return NextResponse.redirect(new URL('/', request.url));
     }
 

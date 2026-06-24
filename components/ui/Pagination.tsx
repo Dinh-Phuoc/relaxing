@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '~/components/ui/button';
+import { cn } from '~/lib/utils';
 
 interface PaginationProps {
     page: number;
@@ -37,66 +39,49 @@ export default function Pagination({ page, totalPages, onPageChange, isLoading }
 
     const pages = getPageNumbers(page, totalPages);
 
-    const btnBase: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: '36px',
-        height: '36px',
-        padding: '0 8px',
-        borderRadius: '8px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        background: 'rgba(255,255,255,0.04)',
-        color: '#a0a0b0',
-        fontSize: '13px',
-        fontWeight: 500,
-        cursor: 'pointer',
-        transition: 'all 0.15s',
-    };
-
     return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '32px', flexWrap: 'wrap' }}>
-            <button
+        <div className="flex justify-center items-center gap-1.5 mt-8 flex-wrap">
+            <Button
                 type="button"
+                variant="outline"
+                size="icon"
                 disabled={page <= 1 || isLoading}
                 onClick={() => onPageChange(page - 1)}
-                style={{ ...btnBase, opacity: page <= 1 || isLoading ? 0.4 : 1, cursor: page <= 1 || isLoading ? 'not-allowed' : 'pointer' }}
                 aria-label="Trang trước"
             >
                 <ChevronLeft size={16} />
-            </button>
+            </Button>
 
             {pages.map((p, idx) =>
                 p === '...' ? (
-                    <span key={`ellipsis-${idx}`} style={{ color: '#606070', padding: '0 4px', fontSize: '13px' }}>...</span>
+                    <span key={`ellipsis-${idx}`} className="text-text-muted px-1 text-sm">
+                        ...
+                    </span>
                 ) : (
-                    <button
+                    <Button
                         key={p}
                         type="button"
+                        variant={p === page ? 'default' : 'outline'}
+                        size="icon"
                         disabled={isLoading}
                         onClick={() => onPageChange(p)}
-                        style={{
-                            ...btnBase,
-                            background: p === page ? 'rgba(229,9,20,0.25)' : btnBase.background,
-                            borderColor: p === page ? 'rgba(229,9,20,0.5)' : 'rgba(255,255,255,0.1)',
-                            color: p === page ? '#fff' : '#a0a0b0',
-                            fontWeight: p === page ? 600 : 500,
-                        }}
+                        className={cn(p === page && 'font-semibold')}
                     >
                         {p}
-                    </button>
+                    </Button>
                 ),
             )}
 
-            <button
+            <Button
                 type="button"
+                variant="outline"
+                size="icon"
                 disabled={page >= totalPages || isLoading}
                 onClick={() => onPageChange(page + 1)}
-                style={{ ...btnBase, opacity: page >= totalPages || isLoading ? 0.4 : 1, cursor: page >= totalPages || isLoading ? 'not-allowed' : 'pointer' }}
                 aria-label="Trang sau"
             >
                 <ChevronRight size={16} />
-            </button>
+            </Button>
         </div>
     );
 }

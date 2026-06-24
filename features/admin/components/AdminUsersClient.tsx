@@ -7,6 +7,36 @@ import { Shield, UserPlus, Users } from 'lucide-react';
 import { useAuthStore } from '~/stores/auth.store';
 import apiClient from '~/lib/axios/client';
 import { User, UserRole } from '~/types/auth';
+import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
+import { Alert } from '~/components/ui/alert';
+import {
+    AdminContainer,
+    AdminHeader,
+    AdminIconBox,
+    AdminTitle,
+    AdminSubtitle,
+    AdminCard,
+    AdminCardHeader,
+    AdminCardTitle,
+    AdminForm,
+    AdminFormGrid,
+    AdminField,
+    AdminCheckboxRow,
+    AdminCheckboxLabel,
+    AdminCheckbox,
+    AdminSelect,
+    SuccessAlert,
+    UserList,
+    UserListItem,
+    UserName,
+    UserMeta,
+    UserBadgeRow,
+    StatusBadge,
+    RoleBadge,
+    LoadingText,
+} from '~/styles/components/admin.styles';
 
 const ROLES: { label: string; value: UserRole }[] = [
     { label: 'Người dùng', value: 'user' },
@@ -110,70 +140,30 @@ export default function AdminUsersClient() {
         }
     };
 
-    const inputStyle: React.CSSProperties = {
-        width: '100%',
-        padding: '12px 16px',
-        background: 'rgba(255,255,255,0.06)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '10px',
-        color: '#fff',
-        fontSize: '15px',
-        outline: 'none',
-    };
-
     return (
-        <div style={{ maxWidth: '900px', margin: '48px auto', padding: '0 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                <div
-                    style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '12px',
-                        background: 'rgba(229,9,20,0.15)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
+        <AdminContainer>
+            <AdminHeader>
+                <AdminIconBox>
                     <Shield size={22} color="#e50914" />
-                </div>
+                </AdminIconBox>
                 <div>
-                    <h1 style={{ color: 'white', fontSize: '28px', fontWeight: 700 }}>Quản lý tài khoản</h1>
-                    <p style={{ color: '#606070', fontSize: '14px', marginTop: '4px' }}>
-                        Chỉ admin mới có quyền tạo tài khoản mới
-                    </p>
+                    <AdminTitle>Quản lý tài khoản</AdminTitle>
+                    <AdminSubtitle>Chỉ admin mới có quyền tạo tài khoản mới</AdminSubtitle>
                 </div>
-            </div>
+            </AdminHeader>
 
-            <div
-                style={{
-                    background: '#111118',
-                    borderRadius: '16px',
-                    padding: '28px',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    marginBottom: '24px',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <AdminCard>
+                <AdminCardHeader>
                     <UserPlus size={18} color="#e50914" />
-                    <h2 style={{ color: 'white', fontSize: '18px', fontWeight: 600 }}>Tạo tài khoản mới</h2>
-                </div>
+                    <AdminCardTitle>Tạo tài khoản mới</AdminCardTitle>
+                </AdminCardHeader>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label
-                                style={{
-                                    display: 'block',
-                                    color: '#a0a0b0',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    marginBottom: '8px',
-                                }}
-                            >
-                                TÊN NGƯỜI DÙNG
-                            </label>
-                            <input
+                <AdminForm onSubmit={handleSubmit}>
+                    <AdminFormGrid>
+                        <AdminField>
+                            <Label htmlFor="username">Tên người dùng</Label>
+                            <Input
+                                id="username"
                                 type="text"
                                 name="username"
                                 value={form.username}
@@ -181,225 +171,120 @@ export default function AdminUsersClient() {
                                 placeholder="username"
                                 required
                                 minLength={3}
-                                style={inputStyle}
                             />
-                        </div>
-                        <div>
-                            <label
-                                style={{
-                                    display: 'block',
-                                    color: '#a0a0b0',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    marginBottom: '8px',
-                                }}
-                            >
-                                MẬT KHẨU
-                            </label>
-                            <input
+                        </AdminField>
+                        <AdminField>
+                            <Label htmlFor="password">Mật khẩu</Label>
+                            <Input
+                                id="password"
                                 type="password"
                                 name="password"
                                 value={form.password}
                                 onChange={handleChange}
                                 placeholder="Tối thiểu 6 ký tự"
                                 required
-                                style={inputStyle}
                             />
-                        </div>
-                    </div>
+                        </AdminField>
+                    </AdminFormGrid>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div>
-                            <label
-                                style={{
-                                    display: 'block',
-                                    color: '#a0a0b0',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    marginBottom: '8px',
-                                }}
-                            >
-                                VAI TRÒ
-                            </label>
-                            <select
+                    <AdminFormGrid>
+                        <AdminField>
+                            <Label htmlFor="role">Vai trò</Label>
+                            <AdminSelect
+                                id="role"
                                 name="role"
                                 value={form.role}
                                 onChange={handleChange}
                                 className="dark-select"
-                                style={{ ...inputStyle, cursor: 'pointer' }}
                             >
                                 {ROLES.map((r) => (
                                     <option key={r.value} value={r.value}>
                                         {r.label}
                                     </option>
                                 ))}
-                            </select>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '4px' }}>
-                            <label
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '10px',
-                                    color: '#c0c0d0',
-                                    fontSize: '14px',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                <input
+                            </AdminSelect>
+                        </AdminField>
+                        <AdminCheckboxRow>
+                            <AdminCheckboxLabel>
+                                <AdminCheckbox
                                     type="checkbox"
                                     name="isActive"
                                     checked={form.isActive}
                                     onChange={handleChange}
-                                    style={{ width: 16, height: 16, accentColor: '#e50914' }}
                                 />
                                 Kích hoạt tài khoản ngay
-                            </label>
-                        </div>
-                    </div>
+                            </AdminCheckboxLabel>
+                        </AdminCheckboxRow>
+                    </AdminFormGrid>
 
                     {error && (
-                        <div
-                            style={{
-                                background: 'rgba(229,9,20,0.1)',
-                                border: '1px solid rgba(229,9,20,0.3)',
-                                borderRadius: '8px',
-                                padding: '12px',
-                                color: '#e57080',
-                                fontSize: '14px',
-                                whiteSpace: 'pre-wrap',
-                            }}
-                        >
+                        <Alert variant="destructive" className="whitespace-pre-wrap">
                             {error}
-                        </div>
+                        </Alert>
                     )}
 
-                    {success && (
-                        <div
-                            style={{
-                                background: 'rgba(34,197,94,0.1)',
-                                border: '1px solid rgba(34,197,94,0.3)',
-                                borderRadius: '8px',
-                                padding: '12px',
-                                color: '#86efac',
-                                fontSize: '14px',
-                            }}
-                        >
-                            {success}
-                        </div>
-                    )}
+                    {success && <SuccessAlert>{success}</SuccessAlert>}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                            padding: '14px',
-                            borderRadius: '10px',
-                            background: loading ? 'rgba(229,9,20,0.5)' : 'linear-gradient(135deg, #e50914, #b20710)',
-                            color: 'white',
-                            border: 'none',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            fontWeight: 700,
-                            fontSize: '15px',
-                        }}
-                    >
+                    <Button type="submit" variant="gradient" size="lg" disabled={loading} className="w-full">
                         {loading ? 'Đang tạo...' : 'Tạo tài khoản'}
-                    </button>
-                </form>
-            </div>
+                    </Button>
+                </AdminForm>
+            </AdminCard>
 
-            <div
-                style={{
-                    background: '#111118',
-                    borderRadius: '16px',
-                    padding: '28px',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <AdminCard>
+                <AdminCardHeader>
                     <Users size={18} color="#a0a0b0" />
-                    <h2 style={{ color: 'white', fontSize: '18px', fontWeight: 600 }}>
+                    <AdminCardTitle>
                         Danh sách tài khoản ({usersData?.pagination.total ?? 0})
-                    </h2>
-                </div>
+                    </AdminCardTitle>
+                </AdminCardHeader>
 
                 {usersLoading ? (
-                    <p style={{ color: '#606070', fontSize: '14px' }}>Đang tải...</p>
+                    <LoadingText>Đang tải...</LoadingText>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <UserList>
                         {usersData?.items.map((u) => (
-                            <div
-                                key={u._id}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '12px 16px',
-                                    borderRadius: '10px',
-                                    background: 'rgba(255,255,255,0.03)',
-                                    border: '1px solid rgba(255,255,255,0.06)',
-                                }}
-                            >
+                            <UserListItem key={u._id}>
                                 <div>
-                                    <p style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>{u.username}</p>
-                                    <p style={{ color: '#606070', fontSize: '12px' }}>
-                                        {ROLE_LABELS[u.role]} · {u.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
-                                    </p>
+                                    <UserName>{u.username}</UserName>
+                                    <UserMeta>
+                                        {ROLE_LABELS[u.role]} ·{' '}
+                                        {u.isActive ? 'Đang hoạt động' : 'Đã vô hiệu hóa'}
+                                    </UserMeta>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <span
-                                        style={{
-                                            fontSize: '12px',
-                                            fontWeight: 600,
-                                            color: u.isActive ? '#22c55e' : '#606070',
-                                            background: u.isActive ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.06)',
-                                            padding: '4px 10px',
-                                            borderRadius: '20px',
-                                        }}
-                                    >
+                                <UserBadgeRow>
+                                    <StatusBadge $active={u.isActive}>
                                         {u.isActive ? 'Active' : 'Disabled'}
-                                    </span>
-                                    <span
-                                        style={{
-                                            fontSize: '12px',
-                                            fontWeight: 600,
-                                            color: ROLE_COLORS[u.role],
-                                            background: `${ROLE_COLORS[u.role]}20`,
-                                            padding: '4px 10px',
-                                            borderRadius: '20px',
-                                        }}
-                                    >
+                                    </StatusBadge>
+                                    <RoleBadge $color={ROLE_COLORS[u.role]}>
                                         {ROLE_LABELS[u.role]}
-                                    </span>
+                                    </RoleBadge>
                                     {u._id !== user?._id && (
-                                        <button
+                                        <Button
                                             type="button"
+                                            variant="outline"
+                                            size="sm"
                                             disabled={togglingId === u._id}
                                             onClick={() => handleToggleActive(u._id, !u.isActive)}
-                                            style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '8px',
-                                                border: '1px solid rgba(255,255,255,0.12)',
-                                                background: 'rgba(255,255,255,0.04)',
-                                                color: u.isActive ? '#e57080' : '#86efac',
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                                cursor: togglingId === u._id ? 'not-allowed' : 'pointer',
-                                            }}
+                                            className={
+                                                u.isActive
+                                                    ? 'text-error border-error-border'
+                                                    : 'text-green-400 border-green-500/30'
+                                            }
                                         >
                                             {togglingId === u._id
                                                 ? '...'
                                                 : u.isActive
                                                   ? 'Vô hiệu hóa'
                                                   : 'Kích hoạt'}
-                                        </button>
+                                        </Button>
                                     )}
-                                </div>
-                            </div>
+                                </UserBadgeRow>
+                            </UserListItem>
                         ))}
-                    </div>
+                    </UserList>
                 )}
-            </div>
-        </div>
+            </AdminCard>
+        </AdminContainer>
     );
 }
